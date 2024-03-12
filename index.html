@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="style/style.css">
+
+    <style type="text/css" media="print">
+        .noprint {
+            display: none
+        }
+        
+        .print {
+            display: block !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <header class="el-header noprint">
+            <div class="icon-btns">
+                <i class="icon-list" @click="changeLeftMenu"></i>
+                <i class="icon-skip_previous" v-bind:class="{'disabled': currentPage == 1}" @click="changeCurrentPage('first')"></i>
+                <i class="icon-play_arrow prev-icon" v-bind:class="{'disabled': currentPage == 1}" @click="changeCurrentPage('prev')"></i>
+                <i class="icon-play_arrow" v-bind:class="{'disabled': currentPage == pageNum}" @click="changeCurrentPage('next')"></i>
+                <i class="icon-skip_next" v-bind:class="{'disabled': currentPage == pageNum}" @click="changeCurrentPage('last')"></i>
+                <select v-model="currentPage">
+                    <option v-for="page in pageNum" v-bind:value="page">page {{ page }}</option>
+                </select>
+                <i class="icon-zoom_in" v-bind:class="{'disabled': zoomNum == 2}" @click="modifyZoom('in')"></i>
+                <select v-model="zoomNum">
+                    <option value="0.5">50%</option>
+                    <option value="0.6">60%</option>
+                    <option value="0.7">70%</option>
+                    <option value="0.8">80%</option>
+                    <option value="0.9">90%</option>
+                    <option value="1.0" selected>100%</option>
+                    <option value="1.1">110%</option>
+                    <option value="1.2">120%</option>
+                    <option value="1.3">130%</option>
+                    <option value="1.4">140%</option>
+                    <option value="1.5">150%</option>
+                    <option value="1.6">160%</option>
+                    <option value="1.7">170%</option>
+                    <option value="1.8">180%</option>
+                    <option value="1.9">190%</option>
+                    <option value="2.0">200%</option>
+                </select>
+                <i class="icon-zoom_out" v-bind:class="{'disabled': zoomNum == 0.5}" @click="modifyZoom('out')"></i>
+                <i class="icon-format_align_left" @click="textAlign = 'left'"></i>
+                <i class="icon-format_align_center" @click="textAlign = 'center'"></i>
+                <i class="icon-format_align_right" @click="textAlign = 'right'"></i>
+                <i class="icon-print" @click="window.print()"></i>
+            </div>
+        </header>
+
+        <aside class="noprint" width="240px" v-show="ifMenuShow">
+            <nav class="tabNav">
+                <ul>
+                    <li v-bind:class="{ 'curr': currentNav == 0 }" @click="currentNav = 0">Page</li>
+                    <li v-bind:class="{ 'curr': currentNav == 1 }" @click="currentNav = 1">Bookmark</li>
+                </ul>
+
+                <div class="clear"></div>
+            </nav>
+
+            <div class="tab-conent scrollbar" v-bind:style="{ height: asideHeight + 'px' }">
+
+            <section v-show="currentNav == 0">
+                <ul class="page-menu">
+                    <li v-for="page in pageNum" v-bind:class="{ 'curr': currentPage == page }" @click="changePage(page)"><i class="icon-file-text2"></i> page {{ page }}</li>
+                </ul>
+            </section>
+
+            <section v-show="currentNav == 1">
+                <ul class="page-menu">
+                    <li v-for="page in pageNum" v-bind:class="{ 'curr': currentPage == page }" @click="changePage(page)"><i class="icon-turned_in_not"></i> Bookmark {{ page }}</li>
+                </ul>
+            </section>
+        </div>
+
+        </aside>
+        <div class="main scrollbar noprint"  v-bind:style="{ height: mainHeight + 'px' }" v-bind:class="{ 'mainLeftM': ifMenuShow, 'aleft': textAlign === 'left','acenter': textAlign === 'center','aright': textAlign === 'right'}">
+            <div class="conent" v-html="pageContent" v-bind:style="zoomStyle"></div>
+
+            <div class="clear"></div>
+        </div>
+
+        <!--专门只为打印的内容-->
+        <div class="conent print" style="display:none" v-html="pageContent"></div>
+    </div>
+</body>
+<!-- 先引入 Vue -->
+<script src="js/vue.min.js"></script>
+<script>
+
+var app = new Vue({
+        el: '#app',
+        data: function() {
+            return {
+                // visible: false,
+                isCollapse: false,
+                currentNav: 0,
+                activeName2: 'first',
+                pageNum: 1, 
+                currentPage: 1,
+                pageContent: '',
+                asideHeight: 300,
+                mainHeight: 300,
+                ifMenuShow: true,
+                zoomNum: '1.0',
+                textAlign: 'left',
+                zoomStyle: {},
+                pageDatas: ['<div style="position:absolute;top:-0.000081px;left:0.000000px"><nobr><img height="1146.000000" width="816.000000" src ="bgimg/bg00001.jpg"/></nobr></div><p><span style="font-family:Helvetica;font-size:32.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:213.216721px;left:237.539902px"><nobr>H A IR SH O P </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:71.088608px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:97.882164px;left:126.769501px"><nobr>C ATA L O G O </nobr></span></span></p>','<div style="position:absolute;top:-0.000081px;left:0.000000px"><nobr><img height="1146.000000" width="816.000000" src ="bgimg/bg00002.jpg"/></nobr></div><p><span style="font-family:Helvetica;font-size:32.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:213.423660px;left:239.406219px"><nobr>H A I R S H OP </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:71.088608px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:98.087730px;left:128.635849px"><nobr>C ATA L O G O </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:20.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:355.535156px;left:186.157394px"><nobr>S H AM POO S C API L ARE S </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:14.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:1060.365112px;left:83.669044px"><nobr>@ HAI R SHOP </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:29.718500px;font-weight:bold;color:#000000;"><span style="position:absolute;top:577.018555px;left:-6.555326px;transform: rotate(270deg)"><nobr>ME RE CE S </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:29.718500px;font-weight:bold;color:#000000;"><span style="position:absolute;top:824.337891px;left:35.538651px;transform: rotate(270deg)"><nobr>LO </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:29.718500px;font-weight:bold;color:#000000;"><span style="position:absolute;top:923.584717px;left:36.712601px;transform: rotate(270deg)"><nobr>T E </nobr></span></span></p>','<div style="position:absolute;top:-0.000081px;left:0.000000px"><nobr><img height="1146.000000" width="816.000000" src ="bgimg/bg00003.jpg"/></nobr></div><p><span style="font-family:Helvetica;font-size:28.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:108.081627px;left:36.103706px"><nobr>SHAMPOOS CAPILARES </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:555.750183px;left:49.203110px"><nobr>Refrescante y energizante. Con aroma </nobr></span><span style="position:absolute;top:574.424377px;left:48.723335px"><nobr>a bergamota, este shampoo refresca y </nobr></span><span style="position:absolute;top:593.098572px;left:48.179581px"><nobr>revitaliza el cabello, dejándolo con una </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:611.772766px;left:110.326843px"><nobr>sensación energizante. </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:555.766174px;left:462.963745px"><nobr>Reparación y protección. El sangre de </nobr></span><span style="position:absolute;top:574.440308px;left:474.302521px"><nobr>dragón protege y repara el cabello, </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:593.114563px;left:459.381409px"><nobr>dejándolo suave y protegido de daños. </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:30.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:500.544006px;left:108.477173px"><nobr>Bergamota Sangre de Dragón </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:30.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:914.393005px;left:540.357483px"><nobr>Yeguada </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:969.606567px;left:46.950287px"><nobr>Deﬁnición y cuidado. Ideal para personas </nobr></span><span style="position:absolute;top:988.280823px;left:53.971043px"><nobr>con cabello rizado, este shampoo acen-</nobr></span><span style="position:absolute;top:1006.955078px;left:49.876934px"><nobr>túa y deﬁne los rizos, aportando hidrata-</nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:1025.629272px;left:107.978058px"><nobr>ción y previniendo el frizz. </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:969.622620px;left:497.829742px"><nobr>Fortaleza y brillo. La yeguada </nobr></span><span style="position:absolute;top:988.296875px;left:480.141937px"><nobr>aporta fortaleza y brillo al cabello, </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:1006.971008px;left:494.743164px"><nobr>dejándolo con una apariencia </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:12.000000px;font-style:normal;font-weight:normal;color:#6D6D6D;"><span style="position:absolute;top:1025.645264px;left:572.947021px"><nobr>saludable. </nobr></span></span></p><p><span style="font-family:Helvetica;font-size:30.000000px;font-weight:bold;color:#000000;"><span style="position:absolute;top:914.399109px;left:66.953438px"><nobr>Rizos Obedientes </nobr></span></span></p>']
+            }
+        },
+        mounted: function() {
+            this.$nextTick(function() {
+                this.pageNum = this.pageDatas.length;
+                this.pageContent = this.pageDatas[0];
+
+                this.setLeftMenuHeight();
+            })
+        },
+        watch: {
+            'currentPage': function(newVal, oldValue) {
+                // console.log('newVal ' + newVal, 'oldValue ' + oldValue);
+                if (newVal) {
+                    this.pageContent = this.pageDatas[this.currentPage - 1];
+                }
+            },
+            'zoomNum': function(newVal, oldValue) {
+                if (newVal) {
+                    this.zoomStyle = {
+                        'transform': 'scale(' + newVal + ')',
+                        '-webkit-transform': 'scale(' + newVal + ')',
+                        '-ms-transform': 'scale(' + newVal + ')',
+                        '-moz-transform': 'scale(' + newVal + ')',
+                        '-o-transform': 'scale(' + newVal + ')'
+                    }
+                }
+            }
+        },
+        methods: {
+            
+            changeCurrentPage: function(methods) {
+                switch (methods) {
+                    case 'first':
+                        this.currentPage = 1;
+                        break;
+                    case 'prev':
+                        if (this.currentPage > 1) {
+                            this.currentPage -= 1;
+                        }
+                        break;
+                    case 'next':
+                        if (this.currentPage < this.pageNum) {
+                            this.currentPage += 1;
+                        }
+                        break;
+                    case 'last':
+                        this.currentPage = this.pageNum;
+                        break;
+                }
+            },
+
+            gotoPage: function(page) {
+                console.log(page);
+                this.currentPage = page;
+            },
+            modifyZoom: function(type) {
+                switch (type) {
+                    case 'in':
+                        if (this.zoomNum < 2) {
+                            // this.zoomNum = (this.zoomNum + 0.1).toFixed(1);
+                            this.zoomNum = (parseFloat(this.zoomNum) + 0.1).toFixed(1);
+                        }
+                        break;
+                    case 'out':
+                        if (this.zoomNum > 0.5) {
+                            this.zoomNum = (parseFloat(this.zoomNum) - 0.1).toFixed(1);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                console.log(this.zoomNum);
+            },
+            setLeftMenuHeight: function() {
+                // this.asideHeight = document.body.scrollHeight - 60;
+                this.mainHeight = document.documentElement.clientHeight - 60 - 20;
+                // 60为头部导航高度， 46为menu高度， 40为上下padding
+                this.asideHeight = this.mainHeight - 20 - 46;
+            },
+            changePage: function(page) {
+                this.currentPage = page;
+                // this.pageContent = this.pageDatas[page - 1];
+            },
+            changeLeftMenu: function() {
+                this.ifMenuShow = !this.ifMenuShow;
+            }
+        }
+    });
+
+function gotoPage(page) {
+    console.log(page);
+    app.gotoPage(page);
+}
+
+</script>
+
+</html>
